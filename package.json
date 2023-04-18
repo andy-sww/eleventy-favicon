@@ -21,6 +21,6 @@
   "license": "ISC",
   "dependencies": {
     "sharp": "^0.30.4",
-    "to-ico": "^1.1.5"
+    "image-to-ico": "^1.0.1"
   }
 }
