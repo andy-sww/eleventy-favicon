@@ -44,31 +44,50 @@ const defaultOptions = {
   destination: "./_site",
 };
 module.exports = function (config, options = defaultOptions) {
+
   const destination = options.destination || defaultOptions.destination;
-  config.addAsyncShortcode("favicon", async function (faviconFile) {
-    const { mtimeMs } = await fs.stat(faviconFile);
-    const lastGeneration = cache[faviconFile] || { mtime: 0, svg: false };
-    if (mtimeMs > lastGeneration.mtime) {
-      const metadata = await sharp(faviconFile).metadata();
-      cache[faviconFile] = { mtime: mtimeMs, svg: metadata.format === "svg" };
-      faviconTypes.forEach(([name, generator]) =>
-        generator(metadata, faviconFile).then(
-          saveFile(`${destination}/${name}`)
-        )
-      );
-      if (cache[faviconFile].svg) {
-        fs.copyFile(faviconFile, `${destination}/favicon.svg`);
-      }
+
+  config.addAsyncShortcode("favicon", async function (favicon) {
+
+    let faviconFile = favicon.url;
+
+    if(favicon.isIco){
+      fs.copyFile(faviconFile, `${destination}/favicon.ico`);
+      try {
+        await fs.unlink(`${destination}/apple-touch-icon.png`);
+      } catch {
+        // nothing to do here - if the file isn't there ... it isn't there
+      }    
+      return `
+<link rel="icon" href="/favicon.ico">      
+`;
     }
+    else {
+      const { mtimeMs } = await fs.stat(faviconFile);
+      const lastGeneration = cache[faviconFile] || { mtime: 0, svg: false };
+      if (mtimeMs > lastGeneration.mtime) {
+        const metadata = await sharp(faviconFile).metadata();
+        cache[faviconFile] = { mtime: mtimeMs, svg: metadata.format === "svg" };
+        faviconTypes.forEach(([name, generator]) =>
+          generator(metadata, faviconFile).then(
+            saveFile(`${destination}/${name}`)
+          )
+        );
+        if (cache[faviconFile].svg) {
+          fs.copyFile(faviconFile, `${destination}/favicon.svg`);
+        }
+      }
 
-    const svgEntry = cache[faviconFile].svg
-      ? '<link rel="icon" type="image/svg+xml" href="/favicon.svg"></link>'
-      : "";
+      const svgEntry = cache[faviconFile].svg
+        ? '<link rel="icon" type="image/svg+xml" href="/favicon.svg"></link>'
+        : "";
 
-    return `
+      return `
 <link rel="icon" href="/favicon.ico">
 ${svgEntry}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
     `;
+    }
+
   });
 };
