@@ -1,5 +1,5 @@
 const sharp = require("sharp");
-const toIco = require("to-ico");
+const toIco = require("image-to-ico");
 const fs = require("fs").promises;
 
 // Caches all the file generations that were made.
