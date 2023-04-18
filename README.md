@@ -1,3 +1,5 @@
+> **Warning**: This Fork is **heavily modified** and contains **breaking changes**. Please don't use this if you don't know what it is...
+
 # eleventy-favicon
 
 Generate the perfect set of favicon icons **from a single image file**.
