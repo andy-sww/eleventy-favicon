@@ -54,10 +54,14 @@ module.exports = function (config, options = defaultOptions) {
     if(!img){
       try {
         await fs.unlink(`${destination}/apple-touch-icon.png`);
+      } catch {
+        // nothing to do here - if the file isn't there ... it isn't there
+      }
+      try {
         await fs.unlink(`${destination}/favicon.ico`);
       } catch {
-        // nothing to do here - if the files aren't there ... they aren't there
-      }    
+        // nothing to do here - if the file isn't there ... it isn't there
+      }     
       return '';
     } 
 
