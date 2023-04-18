@@ -1,6 +1,8 @@
 const sharp = require("sharp");
 const toIco = require("image-to-ico");
 const fs = require("fs").promises;
+const path = require("path");
+
 
 // Caches all the file generations that were made.
 // It keeps track of the mtime of the source file so the cache can be invalidated if the source changes
@@ -47,11 +49,21 @@ module.exports = function (config, options = defaultOptions) {
 
   const destination = options.destination || defaultOptions.destination;
 
-  config.addAsyncShortcode("favicon", async function (favicon) {
+  config.addAsyncShortcode("favicon", async function (img) {
 
-    let faviconFile = favicon.url;
+    if(!img){
+      try {
+        await fs.unlink(`${destination}/apple-touch-icon.png`);
+        await fs.unlink(`${destination}/favicon.ico`);
+      } catch {
+        // nothing to do here - if the files aren't there ... they aren't there
+      }    
+      return '';
+    } 
 
-    if(favicon.isIco){
+    let faviconFile = path.join(process.cwd(), '/public/', img.url);
+
+    if(img.ext == '.ico' || img.mime == "image/x-icon"){
       fs.copyFile(faviconFile, `${destination}/favicon.ico`);
       try {
         await fs.unlink(`${destination}/apple-touch-icon.png`);
