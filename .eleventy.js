@@ -31,9 +31,9 @@ function generatePngFavicon({ density, width, height }, sourcePath) {
     .toBuffer();
 }
 
-function saveFile(destination) {
-  return function (buffer) {
-    return fs.writeFile(destination, buffer);
+async function saveFile(destination) {
+  return async function (buffer) {
+    return await fs.writeFile(destination, buffer);
   };
 }
 
@@ -84,13 +84,13 @@ module.exports = function (config, options = defaultOptions) {
       if (mtimeMs > lastGeneration.mtime) {
         const metadata = await sharp(faviconFile).metadata();
         cache[faviconFile] = { mtime: mtimeMs, svg: metadata.format === "svg" };
-        faviconTypes.forEach(([name, generator]) =>
+        faviconTypes.forEach(async ([name, generator]) =>
           generator(metadata, faviconFile).then(
-            saveFile(`${destination}/${name}`)
+            await saveFile(`${destination}/${name}`)
           )
         );
         if (cache[faviconFile].svg) {
-          fs.copyFile(faviconFile, `${destination}/favicon.svg`);
+          await fs.copyFile(faviconFile, `${destination}/favicon.svg`);
         }
       }
 
