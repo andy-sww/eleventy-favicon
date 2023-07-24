@@ -3,11 +3,6 @@ const toIco = require("image-to-ico");
 const fs = require("fs").promises;
 const path = require("path");
 
-
-// Caches all the file generations that were made.
-// It keeps track of the mtime of the source file so the cache can be invalidated if the source changes
-let cache = {};
-
 function generateIcoFavicon({ width, height, density }, sourcePath) {
   const faviconDimensions = [32, 64];
   // Create buffer for each size
@@ -45,13 +40,14 @@ const faviconTypes = [
 const defaultOptions = {
   destination: "./_site",
 };
+
 module.exports = function (config, options = defaultOptions) {
 
   const destination = options.destination || defaultOptions.destination;
 
   config.addAsyncShortcode("favicon", async function (img) {
 
-    if(!img){
+    if (!img) {
       try {
         await fs.unlink(`${destination}/apple-touch-icon.png`);
       } catch {
@@ -61,48 +57,35 @@ module.exports = function (config, options = defaultOptions) {
         await fs.unlink(`${destination}/favicon.ico`);
       } catch {
         // nothing to do here - if the file isn't there ... it isn't there
-      }     
+      }
       return '';
-    } 
+    }
 
     let faviconFile = path.join(process.cwd(), '/public/', img.url);
 
-    if(img.ext == '.ico' || img.mime == "image/x-icon"){
+    if (img.ext == '.ico' || img.mime == "image/x-icon") {
       fs.copyFile(faviconFile, `${destination}/favicon.ico`);
       try {
         await fs.unlink(`${destination}/apple-touch-icon.png`);
       } catch {
         // nothing to do here - if the file isn't there ... it isn't there
-      }    
+      }
       return `
 <link rel="icon" href="/favicon.ico">      
-`;
+      `;
     }
     else {
-      const { mtimeMs } = await fs.stat(faviconFile);
-      const lastGeneration = cache[faviconFile] || { mtime: 0, svg: false };
-      if (mtimeMs > lastGeneration.mtime) {
-        const metadata = await sharp(faviconFile).metadata();
-        cache[faviconFile] = { mtime: mtimeMs, svg: metadata.format === "svg" };
-        faviconTypes.forEach(async ([name, generator]) =>
-          generator(metadata, faviconFile).then(
-            await saveFile(`${destination}/${name}`)
-          )
-        );
-        if (cache[faviconFile].svg) {
-          await fs.copyFile(faviconFile, `${destination}/favicon.svg`);
-        }
-      }
-
-      const svgEntry = cache[faviconFile].svg
-        ? '<link rel="icon" type="image/svg+xml" href="/favicon.svg"></link>'
-        : "";
+      const metadata = await sharp(faviconFile).metadata();
+      faviconTypes.forEach(async ([name, generator]) =>
+        generator(metadata, faviconFile).then(
+          await saveFile(`${destination}/${name}`)
+        )
+      );
 
       return `
 <link rel="icon" href="/favicon.ico">
-${svgEntry}
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-    `;
+      `;
     }
 
   });
