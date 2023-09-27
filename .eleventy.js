@@ -3,6 +3,10 @@ const toIco = require("image-to-ico");
 const fs = require("fs").promises;
 const path = require("path");
 
+function Sleep(milliseconds) {
+return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
 function generateIcoFavicon({ width, height, density }, sourcePath) {
   const faviconDimensions = [32, 64];
   // Create buffer for each size
@@ -64,10 +68,20 @@ module.exports = function (config, options = defaultOptions) {
     let faviconFile = path.join(process.cwd(), '/public/', img.url);
 
     if (img.ext == '.ico' || img.mime == "image/x-icon") {
-      fs.copyFile(faviconFile, `${destination}/favicon.ico`);
+      try {
+        await fs.copyFile(faviconFile, `${destination}/favicon.ico`);
+      } catch(e) {
+        await Sleep(100);
+        try {
+          await fs.copyFile(faviconFile, `${destination}/favicon.ico`);
+        }
+        catch(e) {
+          console.log('Error: Couldn\'t copy Favicon File!');
+        }
+      }
       try {
         await fs.unlink(`${destination}/apple-touch-icon.png`);
-      } catch {
+      } catch(e) {
         // nothing to do here - if the file isn't there ... it isn't there
       }
       return `
